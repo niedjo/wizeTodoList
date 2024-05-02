@@ -52,11 +52,11 @@ wizeTodoList App is a task management application designed to manage a list of a
 
     ```bash
     cd todolist-app
-    npm install
+    pnpm install
     ```
 
 3. Run the application:
 
     ```bash
-    npm start
+    pnpm start
     ```
