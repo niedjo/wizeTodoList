@@ -1,0 +1,10 @@
+:root {
+  background-color: #ecf8f8;
+  font-family: sans-serif;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
