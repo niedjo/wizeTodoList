@@ -8,3 +8,30 @@
   flex-direction: column;
   align-items: start;
 }
+
+.input {
+  width: 320px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #bdbaba;
+  background: '#fff';
+  border: 1px solid #bdbaba;
+  box-shadow: 0px 2px 4px #0000000d;
+  &:hover {
+    border-color: #5a5aff;
+  }
+
+  &:focus {
+    border-color: #5a5aff;
+    box-shadow: 0 0 0 3px #9494ff;
+  }
+
+  /* firefox */
+  &:focus-visible {
+    outline: 0;
+  }
+}

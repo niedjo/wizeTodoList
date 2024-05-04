@@ -1,7 +1,7 @@
 {
   "name": "wizetodolist",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,10 +12,14 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@mui/base": "5.0.0-beta.40",
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.16",
     "@mui/styled-engine-sc": "6.0.0-alpha.18",
+    "@mui/system": "^5.15.15",
     "@mui/x-data-grid": "^7.3.2",
+    "axios": "^1.6.8",
+    "axios-mock-adapter": "^1.22.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.1.9"

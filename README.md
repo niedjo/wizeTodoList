@@ -2,61 +2,78 @@
 
 ## Description
 
-wizeTodoList App is a task management application designed to manage a list of actions to be performed. It allows users to create, modify, and delete tasks, each of which can be assigned to a specific person.
+L'application wizeTodoList est une application de gestion des tâches conçue pour gérer une liste d'actions à effectuer. Elle permet aux utilisateurs de créer, modifier et supprimer des tâches, chacune pouvant être attribuée à une personne spécifique.
 
-## Features
+## Fonctionnalités
 
-- Create, edit, and delete tasks
-- Assign tasks to individuals
-- View task details
-- Filter tasks based on specific criteria
-- Implement pagination for task listing
-- Mocked data handling in the frontend
+- Créer, modifier et supprimer des tâches
+- Attribuer des tâches à des individus
+- Afficher les détails des tâches
+- Filtrer les tâches selon des critères spécifiques
+- Implémenter la pagination pour la liste des tâches
+- Gestion des données simulées côté frontend
 
-## Technologies Used
+## Technologies Utilisées
 
-- **React.js**: Frontend framework for building user interfaces
-- **Vite**: Next generation frontend tooling for modern web development
-- **TypeScript**: Strict syntactical superset of JavaScript adding optional static typing
-- **Axios**: Promise-based HTTP client for making API requests
-- **axios-mock-adapter**: Mock adapter for Axios to mock API responses
-- **Material-UI**: React components for faster and easier web development
+- **React.js**: Framework frontend pour la construction d'interfaces utilisateur
+- **Vite**: Outil frontend de nouvelle génération pour le développement web moderne
+- **TypeScript**: Superset syntaxique strict de JavaScript ajoutant un typage statique optionnel
+- **Axios**: Client HTTP basé sur des promesses pour effectuer des requêtes API
+- **axios-mock-adapter**: Adaptateur de simulation pour Axios pour simuler les réponses API
+- **Material-UI**: Composants React pour un développement web plus rapide et plus facile
 
-## Models
+## Modèles
 
 ### Todo
 
-- **title**: Title of the task (string)
-- **assignee**: Person assigned to the task (Assignee)
-- **startDate**: Start date of the task (Date)
-- **endDate**: End date of the task (Date)
-- **priority**: Priority level of the task (Enum)
-- **labels**: Labels associated with the task (Enum[])
-- **description**: Description of the task (string)
+- **titre**: Titre de la tâche (string)
+- **assignee**: Personne assignée à la tâche (Assignee)
+- **startDate**: Date de début de la tâche (Date)
+- **endDate**: Date de fin de la tâche (Date)
+- **priority**: Niveau de priorité de la tâche (Enum)
+- **labels**: Étiquettes associées à la tâche (Enum[])
+- **description**: Description de la tâche (string)
 
 ### Assignee
 
-- **name**: Name of the person (string)
-- **email**: Email address of the person (string)
-- **phone**: Phone number of the person (string)
+- **name**: Nom de la personne (string)
+- **email**: Adresse e-mail de la personne (string)
+- **phone**: Numéro de téléphone de la personne (string)
 
-## Usage
+### Priority
 
-1. Clone the repository:
+- **LOW**: Basse
+- **MEDIUM**: Moyenne
+- **HIGH**: Haute
+
+### Label
+
+- **HTML**: HTML (rouge)
+- **CSS**: CSS (bleu)
+- **JQUERY**: jQuery (vert)
+- **NODEJS**: Node.js (#333)
+
+## Utilisation
+1. Installer pnpm en utilisant npm :
+    ```bash
+    npm install -g pnpm
+    ```
+
+2. Cloner le dépôt :
 
     ```bash
     git clone https://github.com/niedjo/wizeTodoList.git
     ```
 
-2. Install dependencies:
+3. Installer les dépendances :
 
     ```bash
-    cd todolist-app
-    npm install
+    cd wizeTodoList
+    pnpm install
     ```
 
-3. Run the application:
+4. Lancer l'application :
 
     ```bash
-    npm start
+    pnpm run dev
     ```
