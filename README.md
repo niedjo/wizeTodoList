@@ -68,7 +68,6 @@ L'application wizeTodoList est une application de gestion des tâches conçue po
 3. Installer les dépendances :
 
     ```bash
-    cd wizeTodoList
     pnpm install
     ```
 

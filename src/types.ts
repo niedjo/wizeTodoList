@@ -1,10 +1,10 @@
-type Assignee = {
+export type Assignee = {
     name : string; 
     email : string; 
     phone : string;
 }
 
-enum Priority {
+export enum Priority {
     LOW = 'Basse',
     MEDIUM = 'Moyenne',
     HIGH = 'Haute',

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+// les composant mui
 import { Autocomplete, Box, Paper, TextField } from "@mui/material"
 import Modal from '@mui/material/Modal'
 import Button, {  } from '@mui/material/Button'
@@ -8,19 +9,58 @@ import DateRangeIcon from '@mui/icons-material/DateRange';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import CloseIcon from '@mui/icons-material/Close';
-import { flex_column, flex_line, flex_line_label } from "./style";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+
+// les composant de styles
+import { flex_column, flex_line, flex_line_label } from "./style";
+
+// les composant d'API
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
-import { Label, Todo } from './types';
+
+// les types (Models)
+import { Assignee, Label, Priority, Todo } from './types';
 
 
 
 function App() {
-
-  const [Tasks, setTasks] = useState<Todo[]>()
   
+  const [AllTasks, setAllTasks] = useState<Todo[]>()
+  const [Tasks, setTasks] = useState<Todo[]>()
+
+  const [Staff, setStaff] = useState<Assignee[]>()
   const [Row_tasks_list, setRow_tasks_list] = useState<{ Task_Title: string; Label: Label[]; Schedule: Date; }[]>([])
+
+
+  // fonction pour le formatag de date pour le Schedude
+  function formatDate (date : Date) : string {
+    // const date = new Date(); // Remplacez ceci par votre date
+
+    // Tableaux pour les noms abrégés des mois et les suffixes des jours
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const daySuffixes = ['st', 'nd', 'rd', 'th'];
+
+    // Récupérez les éléments de la date
+    const month = monthNames[date.getMonth()]; // Mois
+    const day = date.getDate(); // Jour
+    const year = date.getFullYear(); // Année
+
+    // Ajoutez un suffixe au jour si nécessaire
+    let dayString = day.toString();
+    if (day > 3 && day < 21) {
+      dayString += daySuffixes[3];
+    } else {
+      dayString += daySuffixes[day % 10 - 1];
+    }
+
+    // Construisez la chaîne de date formatée
+    const formattedDate = `Schedule for ${month} ${dayString}, ${year}`;
+
+    return formattedDate // Affiche la date formatée
+
+}
+
+// on recupere les donnees
   
   useEffect(() => {
 
@@ -200,13 +240,31 @@ function App() {
         //   description: "This task involves planning and organizing a team-building workshop for the company's employees. The purpose of the workshop is to strengthen teamwork, improve communication, and foster collaboration among team members. Activities may include group exercises, icebreakers, and interactive sessions aimed at enhancing team dynamics and morale.",
         // },
       ]
-  )
+    )
 
+    mock.onGet('api/staffs').reply(200,
+      [
+        {name : "John Doe", email : "john.doe@example.com", phone : "123-456-7890"},
+        {name : "Jane Smith", email : "jane.smith@example.com", phone : "987-654-3210"},
+        {name : "Silvania Dane", email : "silvania.dane@example.com", phone : "987-654-4457"},
+        {name : "Yoan Dane", email : "yoan.dane@example.com", phone : "987-654-6673"},
+        {name : "Step Rane", email : "steprane@example.com", phone : "987-654-5555"},
+        {name : "Leon Tiger", email : "leon.tiger@example.com", phone : "987-654-6683"},
+      ]
+    )
+
+    // on recupere les taches
     axios.get<Todo[]>('/api/tasks')
     .then(response => {
-      // const date : Date = new Date().getMonth()
+      setAllTasks(response.data)
       setTasks(response.data)
-      console.log(response.data);
+    })
+    .catch(error => console.log(error))
+
+    // on recupere les membres du personnel (Assignee)
+    axios.get<Assignee[]>('/api/staffs')
+    .then(response => {
+      setStaff(response.data)
     })
     .catch(error => console.log(error))
     
@@ -215,71 +273,51 @@ function App() {
     };
   }, [])
 
-  function formatDate (date : Date) : string {
-    // const date = new Date(); // Remplacez ceci par votre date
-
-    // Tableaux pour les noms abrégés des mois et les suffixes des jours
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const daySuffixes = ['st', 'nd', 'rd', 'th'];
-
-    // Récupérez les éléments de la date
-    const month = monthNames[date.getMonth()]; // Mois
-    const day = date.getDate(); // Jour
-    const year = date.getFullYear(); // Année
-
-    // Ajoutez un suffixe au jour si nécessaire
-    let dayString = day.toString();
-    if (day > 3 && day < 21) {
-      dayString += daySuffixes[3];
-    } else {
-      dayString += daySuffixes[day % 10 - 1];
-    }
-
-    // Construisez la chaîne de date formatée
-    const formattedDate = `${month} ${dayString}, ${year}`;
-
-    return formattedDate // Affiche la date formatée
-
-}
+  // on recuperes les lignes du datagrid
 
   useEffect(() => {
     // Vérifiez si Tasks existe et n'est pas vide
-    if (Tasks) {
+    if (AllTasks) {
       // Utilisez map pour transformer chaque élément de Tasks en un objet correspondant à row_tasks_list
-      const updatedRowTasksList = Tasks.map(t => ({
+      const updatedRowTasksList = AllTasks.map(t => ({
         Task_Title: t.titre,
         Label: t.labels,
-        Schedule: t.endDate
+        Schedule: t.startDate
       }));
       // Mettez à jour row_tasks_list avec le tableau mis à jour
       setRow_tasks_list(updatedRowTasksList);
-      console.log(Row_tasks_list, Tasks);
+      console.log(Row_tasks_list, AllTasks);
     }
-  }, [Tasks]);
+  }, [AllTasks]);
 
   const Peoples = [
-    {label : "darren", email : "darren@gmail.com", phone : "655059273"},
-    {label : "sheldon", email : "sheldon@gmail.com", phone : "655059274"},
-    {label : "niedjo", email : "niedjo@gmail.com", phone : "655059275"},
+    "darren",     
+    "sheldon",
+    "niedjo0",
   ]
 
-  const Label_list = [
+  const Label_list : {label : string}[] = [
     {label : 'CSS'},
     {label : 'Html'},
     {label : 'JQuery'},
     {label : 'Node.js'},
   ]
-  // const Label_list = [
-  //   {label : Label.CSS},
-  //   {label : Label.HTML},
-  //   {label : 'JQuery'},
-  //   {label : 'Node.js'},
-  // ]
 
+  // la gestion des tabs
+
+  const [IsTask, setIsTask] = useState<boolean>(true)
+
+  // la gestion du modale
+
+  // const task_title_value = useRef<Variant extends TextFieldVariants | null?>(null)
   
   const [OpenModal, setOpenModal] = useState<boolean>(false)
-
-
+  const [taskTitleState, setTaskTitleState] = useState<string>('')
+  const [staffState, setStaffState] = useState<string>('')
+  const [startDateState, setStartDateState] = useState<string>('')
+  const [priorityState, setPriorityState] = useState<Priority>(Priority.LOW)
+  const [labelState, setLabelState] = useState<Label[]>([])
+  const [descriptionState, setDescriptionState] = useState<string>('')
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -289,27 +327,129 @@ function App() {
   };
 
 
-  const columns: GridColDef[] = [
-    { field: 'Task_Title', headerName: 'Task_Title', width: 500 },
+  // la gestion du personnel
+
+  const [nameOfNewStaff, setnameOfNewStaff] = useState<string>('')
+  const [IsValidName, setIsValidName] = useState<boolean>(false)
+
+  const handleChangeNameOfNewStaff = (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    
+    const valueOfField : string = e.target.value
+
+    if (Staff) {
+      for (let i = 0; i < Staff.length; i++) {
+        const element = Staff[i].name;
+        // if (valueOfField.length === 0) {
+        //   setIsValidName(false)
+        //   break
+        // }
+        if (element === valueOfField || valueOfField.length < 3) {
+          setIsValidName(true)
+          break
+        }
+        else {
+          setIsValidName(false)
+        }
+        
+      }
+    }
+    setnameOfNewStaff(valueOfField)
+  }
+
+  const [emailOfNewStaff, setemailOfNewStaff] = useState<string>('')
+  const [IsValidEmail, setIsValidEmail] = useState<boolean>(false)
+
+  const handleChangeEmailOfNewStaff = (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const valueOfField : string = e.target.value
+
+    if (valueOfField.includes('@') && valueOfField.length !== 0) {
+      setIsValidEmail(false)
+    }
+    else {
+      setIsValidEmail(true)
+    }
+
+    setemailOfNewStaff(valueOfField)
+  }
+
+  const [PhoneOfNewStaff, setPhoneOfNewStaff] = useState<string>('')
+
+  // le submit des taches : (penser a verifier le length de chaque veleur du state avant de soumettre)
+
+  const submitNewStaff = () => {
+    if (
+      (nameOfNewStaff.length === 0 || IsValidName === true)
+      || (emailOfNewStaff.length === 0 || IsValidEmail === true)
+      || (PhoneOfNewStaff.length === 0)
+    ) {
+      alert("incorrect value of field, please try again")
+      return
+    }
+
+    else {
+      if (Staff) {
+        const newStaffList : Assignee[] = Staff.slice()
+        newStaffList.push({
+          name : nameOfNewStaff.trim(),
+          email : emailOfNewStaff,
+          phone : PhoneOfNewStaff
+        })
+
+        setStaff(newStaffList)
+
+        alert("Staff succesfuly saved")
+      }
+    }
+  }
+
+  // la gestion des taches
+
+  const submitNewTask = () => {
+    if (AllTasks) {
+      const newTask : Todo[] = AllTasks.slice()
+      newTask.push({
+        titre : taskTitleState.trim(), 
+        assignee : {name : staffState, email : "", phone : ""}, 
+        startDate : new Date(startDateState), 
+        endDate : new Date(), 
+        priority : priorityState, 
+        labels : labelState, 
+        description : descriptionState
+      })
+  
+      setAllTasks(newTask)
+    }
+  }
+
+  const columnsOfTask: GridColDef[] = [
+    { field: 'Task_Title', headerName: 'Task_Title', width: 400, editable: false },
     { 
       field: 'Label', 
       headerName: 'Label', 
       sortable: false,
       renderCell : (params) => (
-        <div style={{display : "flex", justifyContent : "end", alignItems : "end"}}>
+        <div style={{display : "flex", justifyContent : "end", alignItems : "center"}}>
           {params.value.map((color : string, index : number) => (
             <PlayArrowOutlinedIcon key={index} sx={{color : color}} />
           ))}
         </div>
       ),
-      width: 120 
+      width: 80,
+      editable: false
     },
     { 
       field: 'Schedule', 
       headerName: 'Schedule', 
-      width: 200,
+      width: 250,
       renderCell : (params) => `${formatDate(new Date(params.value))}`,
+      editable: false
     },
+  ];
+
+  const columnsOfStaff: GridColDef[] = [
+    { field: 'name', headerName: 'Name', width: 200, editable: false },
+    { field: 'email', headerName: 'Email', sortable: false,width: 280,editable: false},
+    { field: 'phone', headerName: 'Phone', width: 250,editable: false}
   ];
 
   return (
@@ -328,8 +468,6 @@ function App() {
         elevation={10}
       >
         
-        {/* le modal */}
-
         <Button
           variant="outlined"
           sx={{
@@ -342,7 +480,7 @@ function App() {
           }}
           onClick={handleOpenModal}
         >
-          + Add New Task
+          {IsTask ? "+ Add New Task" : "+ Add New Staff"} 
         </Button>
 
 
@@ -366,84 +504,154 @@ function App() {
               pb: 3,
             }}
           >
-            <Box sx={{display : "flex", justifyContent : "space-between", alignItems : "center", px : 3, color : "#555"}}>
-              <h3>Add New Task</h3>
-              <div onClick={handleCloseModal} style={{cursor : "pointer"}}><CloseIcon /></div>
-            </Box>
-            <hr style={{width : "100%"}}/>
-            <Box sx={{px : 4, pt : 3}}>
-              <TextField id="outlined-basic" label="Task Title" variant="outlined" sx={{width : "100%"}}/>
-              <br />
-              <Box sx={{display : "flex", justifyContent : "space-between", alignItems : "center", py : 3}}>
-                <Autocomplete
-                  disablePortal
-                  id="combo-box-demo"
-                  options={Peoples}
-                  sx={{ width: "20%" }}
-                  renderInput={(params) => <TextField {...params} label="Staff" />}
+            {
+              IsTask ? 
+            <div>
+              <Box sx={{display : "flex", justifyContent : "space-between", alignItems : "center", px : 3, color : "#555"}}>
+                <h3>Add New Task</h3>
+                <div onClick={handleCloseModal} style={{cursor : "pointer"}}><CloseIcon /></div>
+              </Box>
+              <hr style={{width : "100%"}}/>
+              <Box sx={{px : 4, pt : 3}}>
+                <TextField 
+                    id="outlined-basic" 
+                    label="Task Title" 
+                    variant="outlined" 
+                    sx={{width : "100%"}} 
+                    onChange={
+                      (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
+                      {setTaskTitleState(e.target.value)}
+                    }
                 />
+                <br />
+                <Box sx={{display : "flex", justifyContent : "space-between", alignItems : "center", py : 3}}>
+                  <Autocomplete
+                    disablePortal
+                    id="combo-box-demo"
+                    options={Peoples}
+                    sx={{ width: "20%" }}
+                    renderInput={(params) => <TextField {...params} label="Staff" />}
+                    onChange={(e : any, newValue : string) => {setStaffState(newValue)}}
+                  />
+                  <TextField
+                    type="date"
+                    onChange={(e) => {setStartDateState(e.target.value)}}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    label="Start Date"
+                  />
+                  <Autocomplete
+                    disablePortal
+                    id="combo-box-demo"
+                    options={Peoples}
+                    sx={{ width: "20%" }}
+                    renderInput={(params) => <TextField {...params} label="Priority" />}
+                    onChange={(e : any, newValue : string) => {setPriorityState(newValue)}}
+                  />
+                  <Autocomplete
+                    multiple
+                    limitTags={2}
+                    id="multiple-limit-tags"
+                    options={Label_list}
+                    getOptionLabel={(option) => option.label}
+                    // defaultValue={[Label_list[1], Label_list[0]]}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Label" placeholder="LabelName" />
+                    )}
+                    sx={{ width: '20%' }}
+                    onChange={(e : any, newValue : Label[]) => {setLabelState(newValue)}}
+                  />
+                </Box>
                 <TextField
-                  type="date"
-                  // value={""}
-                  // onChange={onChange}
-                  InputLabelProps={{
-                    shrink: true,
+                  id="outlined-multiline-static"
+                  label="Description"
+                  multiline
+                  rows={4}
+                  // defaultValue="Default Value"
+                  sx={{width : "100%", pb : 3}}
+                  onChange={(e) => {setDescriptionState(e.target.value)}}
+                />
+                <hr style={{width : "100%"}}/>
+              </Box>
+              <Box sx={{display : "flex", justifyContent : "end", alignItems : "end", px : 3}}>
+                <Button 
+                  onClick={submitNewTask} 
+                  variant="outlined" 
+                  sx = {{
+                    textTransform : "none",
+                    mt : 3
                   }}
-                  label="Start Date"
+                >
+                  Save
+                </Button>
+              </Box>
+            </div>
+            :
+            <div>
+              <Box sx={{display : "flex", justifyContent : "space-between", alignItems : "center", px : 3, color : "#555"}}>
+                <h3>Add New Staff</h3>
+                <div onClick={handleCloseModal} style={{cursor : "pointer"}}><CloseIcon /></div>
+              </Box>
+              <hr style={{width : "100%"}}/>
+              <Box sx={{px : 4, pt : 3}}>
+                <TextField 
+                    error={IsValidName}
+                    id="outlined-basic" 
+                    label="Name" 
+                    variant="outlined" 
+                    sx={{width : "100%", pb : 3}} 
+                    helperText={IsValidName && "more than 3 characters an unique"}
+                    onChange={handleChangeNameOfNewStaff}
                 />
-                <Autocomplete
-                  disablePortal
-                  id="combo-box-demo"
-                  options={Peoples}
-                  sx={{ width: "20%" }}
-                  renderInput={(params) => <TextField {...params} label="Priority" />}
+                <TextField 
+                    error={IsValidEmail}
+                    id="outlined-basic" 
+                    label="Email"
+                    type="email" 
+                    variant="outlined" 
+                    sx={{width : "100%", pb : 3}} 
+                    helperText={IsValidEmail && "must contain a @ character"}
+                    onChange={handleChangeEmailOfNewStaff}
                 />
-                <Autocomplete
-                  multiple
-                  limitTags={2}
-                  id="multiple-limit-tags"
-                  options={Label_list}
-                  getOptionLabel={(option) => option.label}
-                  // defaultValue={[Label_list[1], Label_list[0]]}
-                  renderInput={(params) => (
-                    <TextField {...params} label="Label" placeholder="LabelName" />
-                  )}
-                  sx={{ width: '20%' }}
+                <TextField 
+                    id="outlined-basic" 
+                    label="Phone" 
+                    variant="outlined" 
+                    sx={{width : "100%"}} 
+                    onChange={
+                      (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
+                      {setPhoneOfNewStaff(e.target.value)}
+                    }
                 />
               </Box>
-              <TextField
-                id="outlined-multiline-static"
-                label="Description"
-                multiline
-                rows={4}
-                // defaultValue="Default Value"
-                sx={{width : "100%", pb : 3}}
-              />
-              <hr style={{width : "100%"}}/>
-            </Box>
-            <Box sx={{display : "flex", justifyContent : "end", alignItems : "end", px : 3}}>
-              <Button 
-                onClick={() => setOpenModal(false)} 
-                variant="outlined" 
-                sx = {{
-                  textTransform : "none",
-                  mt : 3
-                }}
-              >
-                Save
-              </Button>
-            </Box>
+              <Box sx={{display : "flex", justifyContent : "end", alignItems : "end", px : 3}}>
+                <Button 
+                  onClick={submitNewStaff} 
+                  variant="outlined" 
+                  sx = {{
+                    textTransform : "none",
+                    mt : 3
+                  }}
+                >
+                  Save
+                </Button>
+              </Box>
+            </div> 
+            }
           </Box>
       </Modal>
 
-      <Box sx={{ ...flex_column, pt : 4 }}>
+      { IsTask &&
+      (<Box sx={{ ...flex_column, pt : 4 }}>
         <Button sx={{textTransform : "none"}} startIcon={<PeopleOutlinedIcon />}>All</Button>
         <Button sx={{textTransform : "none"}} startIcon={<DoubleArrowIcon />}>Priority</Button>
         <Button sx={{textTransform : "none"}} startIcon={<DateRangeIcon />}>Today</Button>
         <Button sx={{textTransform : "none"}} startIcon={<CheckCircleOutlineIcon />}>Completed</Button>
-      </Box>
+      </Box>)
+      }
 
-      <Box sx={{...flex_column, pt : 10}}>
+      {IsTask && <Box sx={{...flex_column, pt : 10}}>
         <h4>Labels</h4>
         <Box sx={{...flex_column, justifyContent : "space-evenly", height : "25vh"}}>
           <div style={{...flex_line_label}}><PlayArrowOutlinedIcon sx={{color : "red"}} /> <div style={{marginLeft : 5}}>Html</div></div>
@@ -452,29 +660,82 @@ function App() {
           <div style={{...flex_line_label}}><PlayArrowOutlinedIcon sx={{color : "#333"}} /> <div style={{marginLeft : 5}}>Node.js</div></div>
         </Box>
       </Box>
+      }
+    </Paper>
 
-      
-
-
-      </Paper>
-
-      <div style={{ height: "90vh", width: '65%', marginLeft : "4%", marginTop : 20, background : "#fff", borderRadius : 40 }}>
-        <DataGrid
-          rows={Row_tasks_list}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 8 },
-            },
-          }}
-          pageSizeOptions={[8, 16]}
-          sx={{
-            borderRadius : 10,
-            height : "90vh"
-          }}
-          checkboxSelection
-          getRowId={(row) => row.Task_Title}
-        />
+      <div style={{...flex_column, height: "90vh", width: '70%', marginLeft : "2%", marginTop : 20, }}>
+        <div style={{...flex_line, justifyContent : "space-evenly", alignItems : "center", width: '100%'}}>
+          <Button 
+            variant={ IsTask? "contained" : "outlined" } 
+            sx={{
+              textTransform : "none",
+              borderRadius : 5,
+              px : 5,
+              py : 1,
+              fontWeight : "bold",
+            }}
+            onClick={() => setIsTask(true)}
+            >Tasks</Button>
+          <Button 
+            variant={ IsTask? "outlined" : "contained" } 
+            sx={{
+              textTransform : "none",
+              borderRadius : 5,
+              px : 5,
+              py : 1,
+              fontWeight : "bold",
+            }}
+            onClick={() => setIsTask(false)}
+            >Staff</Button>
+        </div>
+        <div 
+          style={{ 
+            height: "90vh", 
+            width: '100%', 
+            marginLeft : "2%", 
+            marginTop : 20, 
+            background : "#fff", 
+            borderRadius : 40 
+            }}
+        >
+          { IsTask ?
+            <DataGrid
+              rows={Row_tasks_list}
+              columns={columnsOfTask}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 8 },
+                },
+              }}
+              pageSizeOptions={[8, 16]}
+              sx={{
+                borderRadius : 10,
+                height : "81vh"
+              }}
+              checkboxSelection
+              disableRowSelectionOnClick
+              getRowId={(row) => row.Task_Title}
+            /> 
+            :
+            <DataGrid
+              rows={Staff}
+              columns={columnsOfStaff}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 5 },
+                },
+              }}
+              pageSizeOptions={[5, 10]}
+              sx={{
+                borderRadius : 10,
+                height : "81vh"
+              }}
+              checkboxSelection
+              disableRowSelectionOnClick
+              getRowId={(row) => row.name}
+            />
+          }
+        </div>
       </div>
     </div>
 
