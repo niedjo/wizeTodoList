@@ -9,6 +9,7 @@ import DateRangeIcon from '@mui/icons-material/DateRange';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 // les composant de styles
@@ -19,7 +20,7 @@ import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 
 // les types (Models)
-import { Assignee, Label, Priority, Todo } from './types';
+import { Assignee, Label, Priority, Todo, TodoShowed } from './types';
 
 
 
@@ -29,7 +30,7 @@ function App() {
   const [Tasks, setTasks] = useState<Todo[]>()
 
   const [Staff, setStaff] = useState<Assignee[]>()
-  const [Row_tasks_list, setRow_tasks_list] = useState<{ Task_Title: string; Label: Label[]; Schedule: Date; }[]>([])
+  const [Row_tasks_list, setRow_tasks_list] = useState<TodoShowed[]>([])
 
 
   // fonction pour le formatag de date pour le Schedude
@@ -76,8 +77,8 @@ function App() {
             phone: "123-456-7890",
           },
           startDate: new Date("2024-05-10"),
-          endDate: new Date("2024-05-15"),
-          priority: "Basse",
+          endDate: null,
+          priority: "LOW",
           labels: ["red"],
           description: "This task involves carefully reviewing the documentation of the audit to ensure it is up-to-date and accurate. This may include searching for errors, updating outdated sections, and adding new information if necessary.",
         },
@@ -89,8 +90,8 @@ function App() {
             phone: "987-654-3210",
           },
           startDate: new Date("2024-05-12"),
-          endDate: new Date("2024-05-17"),
-          priority: "Haute",
+          endDate: null,
+          priority: "HIGH",
           labels: ["green", "blue"],
           description: "This task involves organizing a trip for the best performing staff member as a form of recognition for their outstanding performance. This may include planning travel arrangements, accommodation, and activities to ensure an enjoyable experience for the recipient.",
         },
@@ -101,9 +102,9 @@ function App() {
             email: "silvania.dane@example.com",
             phone: "987-654-4457",
           },
-          startDate: new Date("2024-06-05"),
+          startDate: new Date("2024-05-05"),
           endDate: new Date("2024-07-01"),
-          priority: "Basse",
+          priority: "LOW",
           labels: ["#333"],
           description: "This task involves organizing a birthday party for the staff members. The purpose is to celebrate their birthdays and foster a positive and inclusive work environment. This may include planning the party venue, decorations, food and drinks, and coordinating any activities or entertainment.",
         },
@@ -115,8 +116,8 @@ function App() {
             phone: "987-654-6673",
           },
           startDate: new Date("2024-06-12"),
-          endDate: new Date("2024-06-17"),
-          priority: "Basse",
+          endDate: null,
+          priority: "LOW",
           labels: ["green"],
           description: "This task involves contacting Adam to review the documentation. The purpose is to ensure accuracy and completeness by verifying information and addressing any discrepancies or updates that may be necessary.",
         },
@@ -130,7 +131,7 @@ function App() {
           },
           startDate: new Date("2024-03-12"),
           endDate: new Date("2024-04-17"),
-          priority: "Moyenne",
+          priority: "MEDIUM",
           labels: ["green", "blue", "#333"],
           description: "Description: This task involves thoroughly examining the quarterly financial report to assess the company's financial performance and identify any trends, opportunities, or areas for improvement. The objective is to ensure accuracy, completeness, and clarity in the report, which will aid in making informed business decisions",
         },
@@ -143,7 +144,7 @@ function App() {
           },
           startDate: new Date("2024-07-05"),
           endDate: new Date("2024-07-10"),
-          priority: "Basse",
+          priority: "LOW",
           labels: ["#333"],
           description: "This task involves conducting market research to gather data and insights into consumer preferences, market trends, and competitive landscape for a new product launch. The goal is to gather relevant information that will inform product development, marketing strategies, and positioning in the marketplace",
         },
@@ -156,7 +157,7 @@ function App() {
           },
           startDate: new Date("2024-06-12"),
           endDate: new Date("2024-06-17"),
-          priority: "Basse",
+          priority: "LOW",
           labels: ["green"],
           description: "This task involves planning and organizing a team-building workshop for the company's employees. The purpose of the workshop is to strengthen teamwork, improve communication, and foster collaboration among team members. Activities may include group exercises, icebreakers, and interactive sessions aimed at enhancing team dynamics and morale.",
         },
@@ -279,9 +280,11 @@ function App() {
     // Vérifiez si Tasks existe et n'est pas vide
     if (AllTasks) {
       // Utilisez map pour transformer chaque élément de Tasks en un objet correspondant à row_tasks_list
-      const updatedRowTasksList = AllTasks.map(t => ({
+      const updatedRowTasksList : TodoShowed = AllTasks.map(t => ({
         Task_Title: t.titre,
         Label: t.labels,
+        Delete : t.titre,
+        Completed : t.titre,
         Schedule: t.startDate
       }));
       // Mettez à jour row_tasks_list avec le tableau mis à jour
@@ -290,33 +293,163 @@ function App() {
     }
   }, [AllTasks]);
 
-  const Peoples = [
-    "darren",     
-    "sheldon",
-    "niedjo0",
-  ]
-
-  const Label_list : {label : string}[] = [
-    {label : 'CSS'},
-    {label : 'Html'},
-    {label : 'JQuery'},
-    {label : 'Node.js'},
+  const Staff_Names : string[] | undefined = Staff?.map(s => s.name)
+  const priority_list : Priority[] = [Priority.LOW, Priority.MEDIUM, Priority.HIGH]
+  const Label_list : string[] = [
+    'CSS',
+    'Html',
+    'JQuery',
+    'Node.js',
   ]
 
   // la gestion des tabs
 
   const [IsTask, setIsTask] = useState<boolean>(true)
+  const [IsAll, setIsAll] = useState<boolean>(true)
+  const [IsPriority, setIsPriority] = useState<boolean>(false)
+  const [IsToday, setIsToday] = useState<boolean>(false)
+  const [IsCompleted, setIsCompleted] = useState<boolean>(false)
+
+  const handleIsTask = () => {
+    setIsAll(true)
+    setIsPriority(false)
+    setIsToday(false)
+    setIsCompleted(false)
+
+    if (AllTasks) {const updatedRowTasksList : TodoShowed[] = AllTasks.map(t => ({
+      Task_Title: t.titre,
+      Label: t.labels,
+      Delete : t.titre,
+      Completed : t.titre,
+      Schedule: t.startDate
+    }));
+    // Mettez à jour row_tasks_list avec le tableau mis à jour
+    setRow_tasks_list(updatedRowTasksList);}
+  }
+
+  const handleIsPriority = () => {
+    setIsAll(false)
+    setIsPriority(true)
+    setIsToday(false)
+    setIsCompleted(false)
+
+    const updatedRowTasksList : TodoShowed[] = []
+
+    if (AllTasks) {
+      for (let i = 0; i < AllTasks.length; i++) {
+        const element = AllTasks[i];
+        if (element.priority === Priority.LOW) {
+          updatedRowTasksList[i] = {
+              Task_Title: element.titre,
+              Label: element.labels,
+              Delete : element.titre,
+              Completed : element.titre,
+              Schedule: element.startDate
+          }
+        }
+      }
+
+      setRow_tasks_list(updatedRowTasksList);
+    }
+
+
+    // const updatedRowTasksList : TodoShowed[] = AllTasks.map(t => ({
+    //   Task_Title: t.titre,
+    //   Label: t.labels,
+    //   Delete : t.titre,
+    //   Completed : t.titre,
+    //   Schedule: t.startDate
+    // }));
+    // Mettez à jour row_tasks_list avec le tableau mis à jour
+    setRow_tasks_list(updatedRowTasksList);
+    console.log(Row_tasks_list, AllTasks);
+  }
+
+  const handleIsToday = () => {
+    setIsAll(false)
+    setIsPriority(false)
+    setIsToday(true)
+    setIsCompleted(false)
+
+    const updatedRowTasksList : TodoShowed[] = []
+
+    if (AllTasks) {
+      for (let i = 0; i < AllTasks.length; i++) {
+        const element = AllTasks[i];
+        if (new Date(element.startDate).toLocaleDateString() === new Date().toLocaleDateString()) {
+          updatedRowTasksList[i] = {
+              Task_Title: element.titre,
+              Label: element.labels,
+              Delete : element.titre,
+              Completed : element.titre,
+              Schedule: element.startDate
+          }
+        }
+      }
+
+      setRow_tasks_list(updatedRowTasksList);
+    }
+
+
+    // const updatedRowTasksList : TodoShowed[] = AllTasks.map(t => ({
+    //   Task_Title: t.titre,
+    //   Label: t.labels,
+    //   Delete : t.titre,
+    //   Completed : t.titre,
+    //   Schedule: t.startDate
+    // }));
+    // Mettez à jour row_tasks_list avec le tableau mis à jour
+    setRow_tasks_list(updatedRowTasksList);
+    console.log(Row_tasks_list, AllTasks);
+  }
+
+  const handleIsComplete = () => {
+    setIsAll(false)
+    setIsPriority(false)
+    setIsToday(false)
+    setIsCompleted(true)
+
+    const updatedRowTasksList : TodoShowed[] = []
+
+    if (AllTasks) {
+      for (let i = 0; i < AllTasks.length; i++) {
+        const element = AllTasks[i];
+        if (element.endDate !== null) {
+          updatedRowTasksList[i] = {
+              Task_Title: element.titre,
+              Label: element.labels,
+              Delete : element.titre,
+              Completed : element.titre,
+              Schedule: element.startDate
+          }
+        }
+      }
+
+      setRow_tasks_list(updatedRowTasksList);
+    }
+
+
+    // const updatedRowTasksList : TodoShowed[] = AllTasks.map(t => ({
+    //   Task_Title: t.titre,
+    //   Label: t.labels,
+    //   Delete : t.titre,
+    //   Completed : t.titre,
+    //   Schedule: t.startDate
+    // }));
+    // Mettez à jour row_tasks_list avec le tableau mis à jour
+    setRow_tasks_list(updatedRowTasksList);
+    console.log(Row_tasks_list, AllTasks);
+  }
 
   // la gestion du modale
 
   // const task_title_value = useRef<Variant extends TextFieldVariants | null?>(null)
   
   const [OpenModal, setOpenModal] = useState<boolean>(false)
-  const [taskTitleState, setTaskTitleState] = useState<string>('')
   const [staffState, setStaffState] = useState<string>('')
   const [startDateState, setStartDateState] = useState<string>('')
-  const [priorityState, setPriorityState] = useState<Priority>(Priority.LOW)
-  const [labelState, setLabelState] = useState<Label[]>([])
+  const [priorityState, setPriorityState] = useState<Priority | null>(Priority.LOW)
+  const [labelState, setLabelState] = useState<string[]>([])
   const [descriptionState, setDescriptionState] = useState<string>('')
 
   const handleOpenModal = () => {
@@ -402,27 +535,308 @@ function App() {
     }
   }
 
+  const [IsUpdateStaff, setIsUpdateStaff] = useState<boolean>(false)
+  const [StaffID, setStaffID] = useState<string>("")
+  
+  const updateStaff = (param : string) => {
+    setIsUpdateStaff(true)
+    if (Staff) {
+      const NewStaff : Assignee[] = Staff.slice()
+      const index : number = NewStaff.findIndex(n => n.name === param)
+
+      setStaffID(Staff[index].name)
+      setnameOfNewStaff(Staff[index].name)
+      setemailOfNewStaff(Staff[index].email)
+      setPhoneOfNewStaff(Staff[index].phone)
+
+      setOpenModal(true)
+    }
+  }
+
+  const updateEffectiveStaff = () => {
+    if (Staff) {
+      const NewStaff : Assignee[] = Staff.slice()
+      const index : number = NewStaff.findIndex(n => n.name === StaffID)
+      
+      if (
+        (nameOfNewStaff.length === 0 || IsValidName === true)
+        || (emailOfNewStaff.length === 0 || IsValidEmail === true)
+        || (PhoneOfNewStaff.length === 0)
+      ) {
+        alert("incorrect value of field, please try again")
+        return
+      }
+
+      NewStaff[index].name = nameOfNewStaff
+      NewStaff[index].email = emailOfNewStaff
+      NewStaff[index].phone = PhoneOfNewStaff
+
+      setStaff(NewStaff)
+
+      setnameOfNewStaff("")
+      setemailOfNewStaff("")
+      setPhoneOfNewStaff("")
+
+      alert("staff updated sucessfuly")
+
+      setIsUpdateStaff(false)
+    }
+  }
   // la gestion des taches
 
+  const [taskTitleState, setTaskTitleState] = useState<string>('')
+  const [IsValidTaskTitle, setIsValidTaskTitle] = useState<boolean>(false)
+
+  const handleChangeTaskTitle = (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const valueOfField : string = e.target.value
+
+    if (valueOfField.length < 3) {
+      setIsValidTaskTitle(true)
+    }
+    else {
+      setIsValidTaskTitle(false)
+    }
+
+    setTaskTitleState(valueOfField)
+  }
+
   const submitNewTask = () => {
+
+    if (IsValidTaskTitle || taskTitleState.length === 0 
+    || staffState.length === 0) {
+      alert("incorrect value of field, please try again")
+      return
+    }
+
     if (AllTasks) {
+
+      // on conerti le tableau de label
+
+      const label_copied : Label[] = []
+
+      for (let i = 0; i < labelState.length; i++) {
+        if (labelState[i] === "Html") {
+          label_copied[i] = Label.HTML
+        }
+        else if (labelState[i] === "CSS") {
+          label_copied[i] = Label.CSS
+        }
+        else if (labelState[i] === "JQuery") {
+          label_copied[i] = Label.JQUERY
+        }
+        else if(labelState[i] === "Node.js") {
+          label_copied[i] = Label.NODEJS
+        }
+        
+      }
+
+      // on cherche l'email et le phone du personnel
+
+      let email_to_submit : string = ""
+      let phone_to_submit : string = ""
+      
+      if (Staff) {
+        for (let i = 0; i < Staff.length; i++) {
+          const element = Staff[i];
+          if (element.name === staffState) {
+            email_to_submit = element.email
+            phone_to_submit = element.phone
+          }
+        }
+      }
+      
+
       const newTask : Todo[] = AllTasks.slice()
       newTask.push({
         titre : taskTitleState.trim(), 
-        assignee : {name : staffState, email : "", phone : ""}, 
+        assignee : {name : staffState, email : email_to_submit, phone : phone_to_submit}, 
         startDate : new Date(startDateState), 
-        endDate : new Date(), 
+        endDate : null, 
         priority : priorityState, 
-        labels : labelState, 
+        labels : label_copied, 
         description : descriptionState
       })
   
       setAllTasks(newTask)
+
+      alert("Task saved succesfuly")
+
     }
   }
 
+      // en considerant le titre d'une tache unique
+  
+  const [TaskTitleID, setTaskTitleID] = useState<string>('')
+  const [IsToUpdate, setIsToUpdate] = useState<boolean>(false)
+
+  const updateTask = (taskTitle : string) => {
+    setIsToUpdate(true)
+    if (AllTasks) {
+      const NewAllTask : Todo[] = AllTasks.slice()
+      const index : number = NewAllTask.findIndex(n => n.titre === taskTitle)
+
+      const label_copied : string[] = []
+
+      for (let i = 0; i < AllTasks[index].labels.length; i++) {
+        const element = AllTasks[index].labels[i]
+        if (element === Label.HTML) {
+          label_copied[i] = "Html"
+        }
+        else if (element === Label.CSS) {
+          label_copied[i] = "CSS"
+        }
+        else if (element === Label.JQUERY) {
+          label_copied[i] = "JQuery"
+        }
+        else if(element === Label.NODEJS) {
+          label_copied[i] = "Node.js"
+        }
+        
+      }
+
+      setTaskTitleID(AllTasks[index].titre) // apres on fait les id recoit ...
+      setTaskTitleState(AllTasks[index].titre)
+      setStaffState(AllTasks[index].assignee.name)
+      const dateee = `${new Date(AllTasks[index].startDate).getFullYear()}-${new Date(AllTasks[index].startDate).getMonth().toString().padStart(2, "0")}-${new Date(AllTasks[index].startDate).getDate().toString().padStart(2, "0")}`
+      setStartDateState(dateee)
+      setPriorityState(AllTasks[index].priority)
+      setLabelState(label_copied)
+      setDescriptionState(AllTasks[index].description)
+
+
+      setOpenModal(true)
+    }
+  }
+
+  const updateEffectiveTask = () => {
+    if (IsValidTaskTitle || taskTitleState.length === 0 
+      || staffState.length === 0) {
+        alert("incorrect value of field, please try again")
+        return
+    }
+
+    if (AllTasks) {
+      const NewAllTask : Todo[] = AllTasks.slice()
+      const index : number = NewAllTask.findIndex(n => n.titre === TaskTitleID)
+
+      if (NewAllTask[index].endDate !== null) {
+        alert("this task can't be updated")
+        setIsToUpdate(false)
+        return
+      }
+
+      const label_copied : Label[] = []
+
+      for (let i = 0; i < labelState.length; i++) {
+        if (labelState[i] === "Html") {
+          label_copied[i] = Label.HTML
+        }
+        else if (labelState[i] === "CSS") {
+          label_copied[i] = Label.CSS
+        }
+        else if (labelState[i] === "JQuery") {
+          label_copied[i] = Label.JQUERY
+        }
+        else if(labelState[i] === "Node.js") {
+          label_copied[i] = Label.NODEJS
+        }
+        
+      }
+
+      let email_to_submit : string = ""
+      let phone_to_submit : string = ""
+      
+      if (Staff) {
+        for (let i = 0; i < Staff.length; i++) {
+          const element = Staff[i];
+          if (element.name === staffState) {
+            email_to_submit = element.email
+            phone_to_submit = element.phone
+          }
+        }
+      }
+
+      NewAllTask[index].titre = taskTitleState
+      NewAllTask[index].assignee.name = staffState
+      NewAllTask[index].assignee.email = email_to_submit
+      NewAllTask[index].assignee.phone = phone_to_submit
+      NewAllTask[index].startDate = new Date(startDateState)
+      NewAllTask[index].endDate = null
+      NewAllTask[index].priority = priorityState
+      NewAllTask[index].labels = label_copied
+      NewAllTask[index].description = descriptionState
+
+      setAllTasks(NewAllTask)
+
+      setTaskTitleID("") 
+      setTaskTitleState("")
+      setStaffState("")
+      setStartDateState("")
+      setPriorityState()
+      setLabelState([])
+      setDescriptionState("")
+
+      alert("task updated succesfuly")
+      setIsToUpdate(false)
+
+    }
+  }
+
+  const updateCompletedTask = (taskTitle : string) => {
+    if (AllTasks) {
+      const NewAllTask : Todo[] = AllTasks.slice()
+      const index : number = NewAllTask.findIndex(n => n.titre === taskTitle)
+  
+      if (NewAllTask[index].endDate !== null) {
+        alert("task is yet done")
+      }
+      else {
+        NewAllTask[index].endDate = new Date()
+        alert("task is pass as done")
+        console.log(NewAllTask[index]);
+      }
+  
+      setAllTasks(NewAllTask)
+    }
+  }
+
+  const deteleTask = (taskTitle : string) => {
+    if (AllTasks) {
+      const NewAllTask : Todo[] = AllTasks.slice()
+      const index : number = NewAllTask.findIndex(n => n.titre === taskTitle)
+      NewAllTask.splice(index, 1)
+      setAllTasks(NewAllTask)
+    }
+
+  }
+
+
   const columnsOfTask: GridColDef[] = [
-    { field: 'Task_Title', headerName: 'Task_Title', width: 400, editable: false },
+    { 
+      field: 'Task_Title', 
+      headerName: 'Task_Title', 
+      width: 400,
+      renderCell : (params) => {
+        let canUpdateTask : boolean = false
+        if (Tasks){
+          const index : number = Tasks.findIndex(a => a.titre === params.value)
+          if (index !== -1 && Tasks[index].endDate !== undefined) {
+            if (Tasks[index].endDate === null) {
+              canUpdateTask = true
+            }
+            else {
+              canUpdateTask = false
+            }
+          }
+        }
+        return(
+        <div onClick={canUpdateTask ? () => updateTask(params.value) : () => {alert("this task can't be updated")}} style={{cursor : "pointer"}}>
+          {params.value}
+        </div>
+      )
+    }, 
+      editable: false 
+    },
     { 
       field: 'Label', 
       headerName: 'Label', 
@@ -434,7 +848,40 @@ function App() {
           ))}
         </div>
       ),
-      width: 80,
+      width: 100,
+      editable: false
+    },
+    { 
+      field: 'Delete', 
+      headerName: 'Delete Task', 
+      width: 100,
+      renderCell : (params) => (<div onClick={() => deteleTask(params.value)} style={{cursor : "pointer"}}>
+        <DeleteForeverIcon sx={{color : "red"}}/>
+      </div>),
+      editable: false
+    },
+    { 
+      field: 'Completed', 
+      headerName: 'Completed', 
+      width: 100,
+      renderCell : (params) => {
+        let color : string = ""
+        if (Tasks){
+          const index : number = Tasks.findIndex(a => a.titre === params.value)
+          if (index !== -1 && Tasks[index].endDate !== undefined) {
+            if (Tasks[index].endDate === null) {
+              color = "#333"
+            }
+            else {
+              color = "blue"
+            }
+          }
+          // console.log(index);
+        }
+        return (<div onClick={() => updateCompletedTask(params.value)} style={{cursor : "pointer"}}>
+          <CheckCircleOutlineIcon sx={{color : `${color}`}}/>
+        </div>)
+      },
       editable: false
     },
     { 
@@ -447,7 +894,15 @@ function App() {
   ];
 
   const columnsOfStaff: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 200, editable: false },
+    { 
+      field: 'name', 
+      headerName: 'Name', 
+      width: 200, 
+      renderCell : (params) => (<div onClick={() => updateStaff(params.value)} style={{cursor : "pointer"}}>
+        {params.value}
+      </div>), 
+      editable: false 
+    },
     { field: 'email', headerName: 'Email', sortable: false,width: 280,editable: false},
     { field: 'phone', headerName: 'Phone', width: 250,editable: false}
   ];
@@ -514,28 +969,30 @@ function App() {
               <hr style={{width : "100%"}}/>
               <Box sx={{px : 4, pt : 3}}>
                 <TextField 
+                    error={IsValidTaskTitle}
                     id="outlined-basic" 
                     label="Task Title" 
                     variant="outlined" 
                     sx={{width : "100%"}} 
-                    onChange={
-                      (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
-                      {setTaskTitleState(e.target.value)}
-                    }
+                    helperText={IsValidTaskTitle && "more than 3 characters"}
+                    value={taskTitleState}
+                    onChange={handleChangeTaskTitle}
                 />
                 <br />
                 <Box sx={{display : "flex", justifyContent : "space-between", alignItems : "center", py : 3}}>
                   <Autocomplete
                     disablePortal
                     id="combo-box-demo"
-                    options={Peoples}
+                    options={Staff_Names}
                     sx={{ width: "20%" }}
                     renderInput={(params) => <TextField {...params} label="Staff" />}
+                    value={staffState}
                     onChange={(e : any, newValue : string) => {setStaffState(newValue)}}
                   />
                   <TextField
                     type="date"
-                    onChange={(e) => {setStartDateState(e.target.value)}}
+                    value={startDateState}
+                    onChange={(e) => {setStartDateState(e.target.value); console.log(startDateState);}}
                     InputLabelProps={{
                       shrink: true,
                     }}
@@ -544,9 +1001,10 @@ function App() {
                   <Autocomplete
                     disablePortal
                     id="combo-box-demo"
-                    options={Peoples}
+                    options={priority_list}
                     sx={{ width: "20%" }}
                     renderInput={(params) => <TextField {...params} label="Priority" />}
+                    value={priorityState}
                     onChange={(e : any, newValue : string) => {setPriorityState(newValue)}}
                   />
                   <Autocomplete
@@ -554,13 +1012,13 @@ function App() {
                     limitTags={2}
                     id="multiple-limit-tags"
                     options={Label_list}
-                    getOptionLabel={(option) => option.label}
-                    // defaultValue={[Label_list[1], Label_list[0]]}
+                    getOptionLabel={(option) => option}
                     renderInput={(params) => (
                       <TextField {...params} label="Label" placeholder="LabelName" />
                     )}
                     sx={{ width: '20%' }}
-                    onChange={(e : any, newValue : Label[]) => {setLabelState(newValue)}}
+                    value={labelState}
+                    onChange={(e : any, newValue : string[]) => {setLabelState(newValue)}}
                   />
                 </Box>
                 <TextField
@@ -568,15 +1026,15 @@ function App() {
                   label="Description"
                   multiline
                   rows={4}
-                  // defaultValue="Default Value"
                   sx={{width : "100%", pb : 3}}
+                  value={descriptionState}
                   onChange={(e) => {setDescriptionState(e.target.value)}}
                 />
                 <hr style={{width : "100%"}}/>
               </Box>
               <Box sx={{display : "flex", justifyContent : "end", alignItems : "end", px : 3}}>
                 <Button 
-                  onClick={submitNewTask} 
+                  onClick={!IsToUpdate ? submitNewTask : updateEffectiveTask} 
                   variant="outlined" 
                   sx = {{
                     textTransform : "none",
@@ -602,6 +1060,7 @@ function App() {
                     variant="outlined" 
                     sx={{width : "100%", pb : 3}} 
                     helperText={IsValidName && "more than 3 characters an unique"}
+                    value={nameOfNewStaff}
                     onChange={handleChangeNameOfNewStaff}
                 />
                 <TextField 
@@ -612,6 +1071,7 @@ function App() {
                     variant="outlined" 
                     sx={{width : "100%", pb : 3}} 
                     helperText={IsValidEmail && "must contain a @ character"}
+                    value={emailOfNewStaff}
                     onChange={handleChangeEmailOfNewStaff}
                 />
                 <TextField 
@@ -619,6 +1079,7 @@ function App() {
                     label="Phone" 
                     variant="outlined" 
                     sx={{width : "100%"}} 
+                    value={PhoneOfNewStaff}
                     onChange={
                       (e : React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
                       {setPhoneOfNewStaff(e.target.value)}
@@ -627,7 +1088,7 @@ function App() {
               </Box>
               <Box sx={{display : "flex", justifyContent : "end", alignItems : "end", px : 3}}>
                 <Button 
-                  onClick={submitNewStaff} 
+                  onClick={IsUpdateStaff? updateEffectiveStaff : submitNewStaff} 
                   variant="outlined" 
                   sx = {{
                     textTransform : "none",
@@ -644,10 +1105,10 @@ function App() {
 
       { IsTask &&
       (<Box sx={{ ...flex_column, pt : 4 }}>
-        <Button sx={{textTransform : "none"}} startIcon={<PeopleOutlinedIcon />}>All</Button>
-        <Button sx={{textTransform : "none"}} startIcon={<DoubleArrowIcon />}>Priority</Button>
-        <Button sx={{textTransform : "none"}} startIcon={<DateRangeIcon />}>Today</Button>
-        <Button sx={{textTransform : "none"}} startIcon={<CheckCircleOutlineIcon />}>Completed</Button>
+        <Button onClick={handleIsTask} variant={IsAll ? "contained" : "outlined"} sx={{textTransform : "none", width : "90%",  margin : 0.5}} startIcon={<PeopleOutlinedIcon/>}>All</Button>
+        <Button onClick={handleIsPriority} variant={IsPriority ? "contained" : "outlined"} sx={{textTransform : "none", width : "90%",  margin : 0.5}} startIcon={<DoubleArrowIcon />}>Priority</Button>
+        <Button onClick={handleIsToday} variant={IsToday ? "contained" : "outlined"} sx={{textTransform : "none", width : "90%",  margin : 0.5}} startIcon={<DateRangeIcon />}>Today</Button>
+        <Button onClick={handleIsComplete} variant={IsCompleted ? "contained" : "outlined"} sx={{textTransform : "none", width : "90%",  margin : 0.5}} startIcon={<CheckCircleOutlineIcon />}>Completed</Button>
       </Box>)
       }
 
@@ -663,7 +1124,7 @@ function App() {
       }
     </Paper>
 
-      <div style={{...flex_column, height: "90vh", width: '70%', marginLeft : "2%", marginTop : 20, }}>
+      <div style={{...flex_column, height: "90vh", width: '73%', marginLeft : "2%", marginTop : 20, }}>
         <div style={{...flex_line, justifyContent : "space-evenly", alignItems : "center", width: '100%'}}>
           <Button 
             variant={ IsTask? "contained" : "outlined" } 
@@ -714,7 +1175,7 @@ function App() {
               }}
               checkboxSelection
               disableRowSelectionOnClick
-              getRowId={(row) => row.Task_Title}
+              getRowId={(row) => row && row.Task_Title ? row.Task_Title : ''}
             /> 
             :
             <DataGrid

@@ -5,9 +5,9 @@ export type Assignee = {
 }
 
 export enum Priority {
-    LOW = 'Basse',
-    MEDIUM = 'Moyenne',
-    HIGH = 'Haute',
+    LOW = 'LOW',
+    MEDIUM = 'MEDIUM',
+    HIGH = 'HIGH',
 }
 
 export enum Label {
@@ -21,9 +21,17 @@ export type Todo = {
     titre: string;
     assignee: Assignee;
     startDate: Date;
-    endDate: Date;
+    endDate: Date | null;
     priority: Priority;
     labels: Label[];
     description: string;
 };
+
+export type TodoShowed = { 
+    Task_Title: string; 
+    Label: Label[]; 
+    Delete : string; 
+    Completed : string; 
+    Schedule: Date; 
+}
   
